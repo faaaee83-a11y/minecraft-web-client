@@ -1,0 +1,39 @@
+name: build-swiftpm
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Install dependencies
+        run: pnpm install
+
+      - name: Build single-file version
+        run: pnpm build-single-file
+        env:
+          LOCAL_CONFIG_FILE: config.mcraft-only.json
+
+      - name: Assemble MinecraftWeb.swiftpm
+        run: |
+          cp -r swiftpm/MinecraftWeb.swiftpm ./MinecraftWeb.swiftpm
+          cp dist/single/index.html MinecraftWeb.swiftpm/Sources/Resources/minecraft.html
+          ls -lh MinecraftWeb.swiftpm/Sources/Resources/
+          zip -r MinecraftWeb-swiftpm.zip MinecraftWeb.swiftpm
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: MinecraftWeb-swiftpm
+          path: MinecraftWeb-swiftpm.zip
